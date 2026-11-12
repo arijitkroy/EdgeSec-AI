@@ -133,12 +133,19 @@ public final class DirectSocks5Server implements AutoCloseable {
         }
 
         Socket remote = new Socket();
-        if (!vpnService.protect(remote)) {
-            remote.close();
-            writeReply(output, 1);
-            return false;
-        }
         try {
+            // Force creation/binding of the underlying descriptor before protect().
+            // On Android an unbound Socket may not yet expose a descriptor to VpnService.
+            remote.bind(new InetSocketAddress(0));
+            if (!vpnService.protect(remote)) {
+                android.util.Log.e("EdgeSec-Socks", "VpnService.protect failed for TCP "
+                        + address.getHostAddress() + ":" + port);
+                remote.close();
+                writeReply(output, 1);
+                return false;
+            }
+            android.util.Log.d("EdgeSec-Socks", "Protected outbound TCP socket for "
+                    + address.getHostAddress() + ":" + port);
             remote.connect(new InetSocketAddress(address, port), 10000);
             android.util.Log.d("EdgeSec-Socks", "TCP destination connected on port " + port);
             remote.setSoTimeout(0);
