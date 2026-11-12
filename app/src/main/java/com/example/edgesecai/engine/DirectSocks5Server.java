@@ -19,6 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -55,6 +56,7 @@ public final class DirectSocks5Server implements AutoCloseable {
         while (running) {
             try {
                 Socket client = serverSocket.accept();
+                android.util.Log.d("EdgeSec-Socks", "Accepted local SOCKS client");
                 clients.execute(() -> handleClient(client));
             } catch (IOException e) {
                 if (running) android.util.Log.e("EdgeSec-Socks", "Accept failed", e);
@@ -96,8 +98,8 @@ public final class DirectSocks5Server implements AutoCloseable {
             } else {
                 writeReply(output, 7);
             }
-        } catch (Exception ignored) {
-            // The client closed or sent a malformed SOCKS request.
+        } catch (Exception e) {
+            android.util.Log.w("EdgeSec-Socks", "SOCKS handshake failed", e);
         } finally {
             if (!handedOff) closeQuietly(client);
         }
@@ -138,6 +140,7 @@ public final class DirectSocks5Server implements AutoCloseable {
         }
         try {
             remote.connect(new InetSocketAddress(address, port), 10000);
+            android.util.Log.d("EdgeSec-Socks", "TCP destination connected on port " + port);
             remote.setSoTimeout(0);
             local.setSoTimeout(0);
             writeReply(output, 0);
@@ -146,6 +149,7 @@ public final class DirectSocks5Server implements AutoCloseable {
             clients.execute(() -> pipe(remote, local, false, address, port));
             return true;
         } catch (IOException e) {
+            android.util.Log.w("EdgeSec-Socks", "TCP destination connect failed on port " + port, e);
             remote.close();
             writeReply(output, 5);
             return false;
@@ -173,35 +177,56 @@ public final class DirectSocks5Server implements AutoCloseable {
 
     private void handleUdpAssociate(Socket control, DataInputStream input, DataOutputStream output)
             throws IOException {
-        DatagramSocket relay = new DatagramSocket(new InetSocketAddress(
+        // The loopback socket receives SOCKS-framed datagrams from the native TUN engine.
+        DatagramSocket localRelay = new DatagramSocket(new InetSocketAddress(
                 InetAddress.getByName("127.0.0.1"), 0));
-        if (!vpnService.protect(relay)) {
-            relay.close();
+        // Internet datagrams must use a wildcard-bound socket; a loopback-bound socket
+        // cannot send packets with a routable source address.
+        DatagramSocket upstream = new DatagramSocket();
+        if (!vpnService.protect(upstream)) {
+            localRelay.close();
+            upstream.close();
             writeReply(output, 1);
             return;
         }
 
-        writeReply(output, 0, InetAddress.getByName("127.0.0.1"), relay.getLocalPort());
+        writeReply(output, 0, InetAddress.getByName("127.0.0.1"), localRelay.getLocalPort());
         control.setSoTimeout(0);
-        final InetSocketAddress[] clientAddress = new InetSocketAddress[1];
+        AtomicReference<InetSocketAddress> clientAddress = new AtomicReference<>();
         clients.execute(() -> {
             byte[] buffer = new byte[MAX_UDP_PAYLOAD];
-            while (running && !relay.isClosed()) {
+            while (running && !upstream.isClosed()) {
                 try {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                    relay.receive(packet);
-                    InetSocketAddress expected = clientAddress[0];
-                    if (expected != null && !packet.getSocketAddress().equals(expected)) {
-                        sendUdpReply(relay, expected, packet);
-                    } else {
-                        clientAddress[0] = (InetSocketAddress) packet.getSocketAddress();
-                        forwardUdpRequest(relay, packet);
+                    upstream.receive(packet);
+                    InetSocketAddress expected = clientAddress.get();
+                    if (expected != null) {
+                        sendUdpReply(localRelay, expected, packet);
                     }
                 } catch (IOException e) {
+                    if (running) android.util.Log.w("EdgeSec-Socks", "UDP receive stopped", e);
                     break;
                 }
             }
-            relay.close();
+            localRelay.close();
+            upstream.close();
+        });
+
+        clients.execute(() -> {
+            byte[] buffer = new byte[MAX_UDP_PAYLOAD];
+            while (running && !localRelay.isClosed()) {
+                try {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    localRelay.receive(packet);
+                    clientAddress.set((InetSocketAddress) packet.getSocketAddress());
+                    forwardUdpRequest(upstream, packet);
+                } catch (IOException e) {
+                    if (running) android.util.Log.w("EdgeSec-Socks", "Local UDP relay stopped", e);
+                    break;
+                }
+            }
+            localRelay.close();
+            upstream.close();
         });
 
         try {
@@ -210,11 +235,12 @@ public final class DirectSocks5Server implements AutoCloseable {
                 // RFC 1928 keeps the control connection open for the UDP association lifetime.
             }
         } finally {
-            relay.close();
+            localRelay.close();
+            upstream.close();
         }
     }
 
-    private void forwardUdpRequest(DatagramSocket relay, DatagramPacket packet) {
+    private void forwardUdpRequest(DatagramSocket upstream, DatagramPacket packet) {
         try {
             DataInputStream framed = new DataInputStream(new java.io.ByteArrayInputStream(
                     packet.getData(), packet.getOffset(), packet.getLength()));
@@ -229,11 +255,11 @@ public final class DirectSocks5Server implements AutoCloseable {
             byte[] data = new byte[payloadLength];
             framed.readFully(data);
             DatagramPacket outbound = new DatagramPacket(data, data.length, destination, port);
-            relay.send(outbound);
+            upstream.send(outbound);
             String dnsQuery = port == 53 ? parseDnsQuestion(data) : "";
             report(destination, port, "UDP", data.length, "", true, dnsQuery, "");
-        } catch (Exception ignored) {
-            // Ignore malformed or blocked datagrams.
+        } catch (Exception e) {
+            android.util.Log.w("EdgeSec-Socks", "Dropping malformed or blocked UDP frame", e);
         }
     }
 
@@ -267,6 +293,8 @@ public final class DirectSocks5Server implements AutoCloseable {
                 destination.getHostAddress(), port, protocol, length + 40, flags,
                 dnsQuery, payloadPreview, 0, "Device traffic", outbound);
         repository.processPacket(packet);
+        android.util.Log.d("EdgeSec-Socks", "Observed " + protocol + " flow on destination port "
+                + port + " (" + length + " payload bytes)");
     }
 
     private static String parseDnsQuestion(byte[] message) {

@@ -62,6 +62,7 @@ public class VpnInspectorService extends VpnService {
             SecurityRepository repository = SecurityRepository.getInstance(this);
             directProxy = new DirectSocks5Server(this, repository);
             directProxy.start();
+            Log.i(TAG, "Local SOCKS5 endpoint listening on 127.0.0.1:" + DirectSocks5Server.PORT);
 
             Builder builder = new Builder();
             builder.setMtu(1500);
@@ -87,6 +88,13 @@ public class VpnInspectorService extends VpnService {
             isRunning = true;
             repository.setProtectionActive(true);
             Log.i(TAG, "Local VPN forwarding and inspection started.");
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (isRunning && !TProxyService.TProxyIsRunning()) {
+                    Log.e(TAG, "Native forwarder exited after startup; removing VPN routes.");
+                    stopVpn();
+                    stopSelf();
+                }
+            }, 2000L);
         } catch (Exception e) {
             Log.e(TAG, "Unable to start local VPN forwarding", e);
             stopVpn();
@@ -95,16 +103,20 @@ public class VpnInspectorService extends VpnService {
 
     private void writeTunnelConfig() throws IOException {
         String config = "tunnel:\n"
+                + "  name: tun0\n"
                 + "  mtu: 1500\n"
+                + "  multi-queue: false\n"
                 + "  ipv4: 10.1.1.2\n"
                 + "  ipv6: 'fd00:ed:5ec::2'\n"
+                + "  icmp: 'off'\n"
                 + "socks5:\n"
                 + "  address: 127.0.0.1\n"
                 + "  port: " + DirectSocks5Server.PORT + "\n"
                 + "  udp: 'udp'\n"
                 + "misc:\n"
                 + "  connect-timeout: 10000\n"
-                + "  log-level: error\n";
+                + "  log-file: '" + new File(getFilesDir(), "hev-tunnel.log").getAbsolutePath() + "'\n"
+                + "  log-level: debug\n";
         File configFile = new File(getFilesDir(), "hev-tunnel.yml");
         try (FileOutputStream output = new FileOutputStream(configFile)) {
             output.write(config.getBytes(StandardCharsets.UTF_8));
