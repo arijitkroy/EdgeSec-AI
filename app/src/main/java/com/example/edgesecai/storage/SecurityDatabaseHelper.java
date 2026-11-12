@@ -192,6 +192,14 @@ public class SecurityDatabaseHelper extends SQLiteOpenHelper {
         db.insertWithOnConflict(TABLE_FLOWS, null, cv, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    public synchronized void clearAlerts() {
+        getWritableDatabase().delete(TABLE_ALERTS, null, null);
+    }
+
+    public synchronized void clearFlows() {
+        getWritableDatabase().delete(TABLE_FLOWS, null, null);
+    }
+
     public synchronized void clearAllData() {
         SQLiteDatabase db = getWritableDatabase();
         db.delete(TABLE_ALERTS, null, null);

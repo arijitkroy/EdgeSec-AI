@@ -29,10 +29,16 @@
     <!-- Alerts -->
     <string name="alerts_title">Threat Alerts</string>
     <string name="no_alerts">No threats detected yet. Run a simulation or activate the shield.</string>
+    <string name="clear_entries">Clear</string>
+    <string name="cancel">Cancel</string>
+    <string name="clear_alerts_title">Clear threat alerts?</string>
+    <string name="clear_alerts_message">This removes saved alert entries and resets the threat counters.</string>
+    <string name="clear_flows_title">Clear flow entries?</string>
+    <string name="clear_flows_message">This removes current and recent flow entries. Monitoring will continue.</string>
 
     <!-- Flows -->
     <string name="flows_title">Recent Network Flows (up to 50)</string>
-    <string name="no_flows">No active flows. Activate the shield to begin monitoring.</string>
+    <string name="no_flows">No recent flows. New traffic will appear while monitoring is active.</string>
 
     <!-- Simulator -->
     <string name="simulator_title">Attack Simulator</string>

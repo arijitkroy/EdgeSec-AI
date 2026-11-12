@@ -17,6 +17,8 @@ import com.example.edgesecai.model.NetworkFlow;
 import com.example.edgesecai.model.SecurityStats;
 import com.example.edgesecai.model.ThreatAlert;
 import com.example.edgesecai.storage.SecurityRepository;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class FlowsFragment extends Fragment implements SecurityRepository.Securi
 
     private RecyclerView recyclerFlows;
     private TextView textNoFlows;
+    private MaterialButton btnClearFlows;
     private NetworkFlowAdapter adapter;
     private SecurityRepository repository;
 
@@ -39,12 +42,20 @@ public class FlowsFragment extends Fragment implements SecurityRepository.Securi
 
         recyclerFlows = view.findViewById(R.id.recyclerFlows);
         textNoFlows = view.findViewById(R.id.textNoFlows);
+        btnClearFlows = view.findViewById(R.id.btnClearFlows);
+        btnClearFlows.setEnabled(false);
 
         adapter = new NetworkFlowAdapter();
         recyclerFlows.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerFlows.setAdapter(adapter);
 
         repository = SecurityRepository.getInstance(requireContext());
+        btnClearFlows.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.clear_flows_title)
+                .setMessage(R.string.clear_flows_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.clear_entries, (dialog, which) -> repository.clearFlows())
+                .show());
     }
 
     @Override
@@ -76,9 +87,11 @@ public class FlowsFragment extends Fragment implements SecurityRepository.Securi
             adapter.setFlows(flows);
             recyclerFlows.setVisibility(View.VISIBLE);
             textNoFlows.setVisibility(View.GONE);
+            btnClearFlows.setEnabled(true);
         } else {
             recyclerFlows.setVisibility(View.GONE);
             textNoFlows.setVisibility(View.VISIBLE);
+            btnClearFlows.setEnabled(false);
         }
     }
 }

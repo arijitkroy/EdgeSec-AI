@@ -17,6 +17,8 @@ import com.example.edgesecai.model.NetworkFlow;
 import com.example.edgesecai.model.SecurityStats;
 import com.example.edgesecai.model.ThreatAlert;
 import com.example.edgesecai.storage.SecurityRepository;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
@@ -25,6 +27,7 @@ public class AlertsFragment extends Fragment implements SecurityRepository.Secur
 
     private RecyclerView recyclerAlerts;
     private TextView textNoAlerts;
+    private MaterialButton btnClearAlerts;
     private ThreatAlertAdapter adapter;
     private SecurityRepository repository;
 
@@ -40,6 +43,8 @@ public class AlertsFragment extends Fragment implements SecurityRepository.Secur
 
         recyclerAlerts = view.findViewById(R.id.recyclerAlerts);
         textNoAlerts = view.findViewById(R.id.textNoAlerts);
+        btnClearAlerts = view.findViewById(R.id.btnClearAlerts);
+        btnClearAlerts.setEnabled(false);
 
         adapter = new ThreatAlertAdapter();
         adapter.setOnBlockClickListener(alert -> {
@@ -54,14 +59,12 @@ public class AlertsFragment extends Fragment implements SecurityRepository.Secur
         recyclerAlerts.setAdapter(adapter);
 
         repository = SecurityRepository.getInstance(requireContext());
-
-        // Load existing alerts
-        List<ThreatAlert> existing = repository.getAlerts();
-        if (!existing.isEmpty()) {
-            adapter.setAlerts(existing);
-            recyclerAlerts.setVisibility(View.VISIBLE);
-            textNoAlerts.setVisibility(View.GONE);
-        }
+        btnClearAlerts.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.clear_alerts_title)
+                .setMessage(R.string.clear_alerts_message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.clear_entries, (dialog, which) -> repository.clearAlerts())
+                .show());
     }
 
     @Override
@@ -82,7 +85,18 @@ public class AlertsFragment extends Fragment implements SecurityRepository.Secur
         adapter.addAlert(alert);
         recyclerAlerts.setVisibility(View.VISIBLE);
         textNoAlerts.setVisibility(View.GONE);
+        btnClearAlerts.setEnabled(true);
         recyclerAlerts.smoothScrollToPosition(0);
+    }
+
+    @Override
+    public void onAlertsUpdated(List<ThreatAlert> alerts) {
+        if (!isAdded()) return;
+        adapter.setAlerts(alerts);
+        boolean hasAlerts = alerts != null && !alerts.isEmpty();
+        recyclerAlerts.setVisibility(hasAlerts ? View.VISIBLE : View.GONE);
+        textNoAlerts.setVisibility(hasAlerts ? View.GONE : View.VISIBLE);
+        btnClearAlerts.setEnabled(hasAlerts);
     }
 
     @Override

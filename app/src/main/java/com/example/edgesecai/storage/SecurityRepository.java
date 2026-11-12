@@ -42,6 +42,7 @@ public class SecurityRepository {
 
     public interface SecurityUpdateListener {
         void onAlertDetected(ThreatAlert alert);
+        default void onAlertsUpdated(List<ThreatAlert> alerts) { }
         void onStatsChanged(SecurityStats stats);
         void onFlowsUpdated(List<NetworkFlow> flows);
     }
@@ -63,6 +64,7 @@ public class SecurityRepository {
             }
             stats.setThreatsBlocked(blockedCount);
             notifyStatsChanged();
+            notifyAlertsUpdated();
         });
     }
 
@@ -175,6 +177,7 @@ public class SecurityRepository {
     public void addListener(SecurityUpdateListener listener) {
         if (listener != null && !listeners.contains(listener)) {
             listeners.add(listener);
+            listener.onAlertsUpdated(getAlerts());
             listener.onStatsChanged(stats);
             listener.onFlowsUpdated(getActiveFlowsList());
         }
@@ -188,6 +191,15 @@ public class SecurityRepository {
         mainHandler.post(() -> {
             for (SecurityUpdateListener l : listeners) {
                 l.onAlertDetected(alert);
+            }
+        });
+    }
+
+    private void notifyAlertsUpdated() {
+        List<ThreatAlert> copy = getAlerts();
+        mainHandler.post(() -> {
+            for (SecurityUpdateListener l : listeners) {
+                l.onAlertsUpdated(copy);
             }
         });
     }
@@ -211,6 +223,30 @@ public class SecurityRepository {
 
     public List<ThreatAlert> getAlerts() {
         return new ArrayList<>(alerts);
+    }
+
+    public void clearAlerts() {
+        backgroundExecutor.execute(() -> {
+            alerts.clear();
+            stats.setThreatsDetected(0);
+            stats.setThreatsBlocked(0);
+            dbHelper.clearAlerts();
+            notifyAlertsUpdated();
+            notifyStatsChanged();
+        });
+    }
+
+    public void clearFlows() {
+        synchronized (activeFlows) {
+            activeFlows.clear();
+        }
+        synchronized (recentPackets) {
+            recentPackets.clear();
+        }
+        stats.setActiveFlows(0);
+        backgroundExecutor.execute(dbHelper::clearFlows);
+        notifyStatsChanged();
+        notifyFlowsUpdated();
     }
 
     public List<NetworkFlow> getActiveFlowsList() {
@@ -241,6 +277,7 @@ public class SecurityRepository {
         blockedPorts.clear();
         stats.reset();
         backgroundExecutor.execute(dbHelper::clearAllData);
+        notifyAlertsUpdated();
         notifyStatsChanged();
         notifyFlowsUpdated();
     }
