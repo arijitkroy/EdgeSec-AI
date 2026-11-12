@@ -2,7 +2,7 @@
 
 EdgeSecAI is an Android cybersecurity-monitoring prototype. Its intended operation is offline for analysis: traffic is forwarded directly to its destination, while the local app inspects flow metadata and selected DNS query names and runs local heuristic detection. It does not send traffic to a hosted analysis service.
 
-The project is still an engineering prototype. The VPN forwarding engine has been integrated, but live forwarding has not yet been verified end to end on a physical device. Do not describe the current build as production-grade endpoint protection.
+The project remains an engineering prototype, not production-grade endpoint protection. The current emulator build was manually checked by loading an external HTTPS page through the active VPN; logs showed protected TCP connections and inbound response data. UDP DNS and UDP/QUIC forwarding were also observed. This validates that emulator path only. Physical-device behavior and broad protocol coverage still need testing.
 
 ## Current status
 
@@ -13,14 +13,20 @@ Implemented:
 - A native TUN-to-SOCKS5 bridge using HevSocks5Tunnel, with an in-app SOCKS5 endpoint.
 - Direct TCP and UDP forwarding through sockets protected from the VPN route. No external SOCKS server is configured.
 - Local flow aggregation, handcrafted intrusion and malware-behavior rules, an Isolation Forest implementation, alerts, and SQLite persistence.
+- Independent Clear actions for alert history and recent flow entries; clearing alerts resets threat counters, while clearing flows leaves monitoring and alert history intact.
+- A custom adaptive launcher icon using a cyan and mint circuit shield on a dark navy background.
 - A local rule-based assistant and synthetic attack simulator.
 - Third-party MIT license notice in `app/src/main/assets/THIRD_PARTY_NOTICES.txt`.
 
-Not yet verified on a connected Android device:
+Verified on the Android emulator:
 
-- Real browsing with the VPN active, including IPv4, IPv6, DNS, HTTPS, and UDP/QUIC.
-- VPN stop, revoke, process death, and network-change recovery.
-- Whether the current direct SOCKS5 UDP association behavior inter-operates with the exact bundled HevSocks5Tunnel build on target devices.
+- HTTPS browsing through the active VPN using an external test page, with TCP connect and inbound response data observed in Logcat.
+- UDP DNS queries and responses, plus UDP/QUIC traffic in both directions.
+
+Still to verify on physical devices and across network conditions:
+
+- IPv4 and IPv6 behavior, multiple DNS configurations, VPN stop/revoke, process death, and network-change recovery.
+- Whether UDP association behavior remains reliable across Android versions, networks, and the bundled HevSocks5Tunnel build.
 
 The last clean build command used during development was:
 
@@ -36,7 +42,7 @@ The last clean build command used during development was:
 - Android Studio / Gradle setup able to resolve the configured Google and Maven Central repositories.
 - Network access for the first build to resolve Android dependencies and the HevSocks5Tunnel 2.19.3 AAR from its GitHub release Ivy repository.
 
-The app's minimum Android SDK is 33 and its target SDK is 37. Android Studio creates `local.properties` for the local SDK path; it is intentionally ignored by Git.
+The app's minimum Android SDK is 33 and its target SDK is 37. Android Studio creates `local.properties` for the local SDK path; it is intentionally ignored by Git. The adaptive launcher icon is a native vector shield/circuit mark and scales without raster density variants on supported Android versions.
 
 Build a debug APK:
 
@@ -56,6 +62,22 @@ Install from Android Studio, or use:
 .\gradlew.bat app:installDebug
 ```
 
+### Release APK
+
+Build the optimized release variant with:
+
+```powershell
+.\gradlew.bat app:assembleRelease
+```
+
+This repository has no release signing key or signing configuration. Gradle therefore produces an **unsigned release APK** at:
+
+```text
+app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+An APK must be signed before normal installation or distribution. In Android Studio, choose **Build > Generate Signed Bundle / APK > APK**, select or create a release keystore, and save the signed artifact outside the repository. Keep the keystore and passwords backed up securely; do not commit them. Friends can build an unsigned release with `app:assembleRelease` or sign their own APK with a keystore they control.
+
 The VPN must be explicitly approved by the user in Android's VPN consent dialog. The app requests notification permission on Android 13 and later.
 
 ## Project layout
@@ -65,18 +87,18 @@ Production sources are under `app/src/main/java/com/example/edgesecai/`.
 - `MainActivity.java`: Activity and bottom-navigation fragment host.
 - `ui/`: Dashboard, alerts, flows, simulator, and assistant UI and adapters.
 - `engine/VpnInspectorService.java`: Foreground Android `VpnService`, TUN setup, native forwarder lifecycle, and shutdown.
-- `engine/DirectSocks5Server.java`: Loopback SOCKS5 endpoint. It handles TCP CONNECT and UDP ASSOCIATE and opens direct sockets outside the VPN.
+- `engine/DirectSocks5Server.java`: Loopback SOCKS5 endpoint. It handles TCP CONNECT and UDP ASSOCIATE and opens protected direct sockets outside the VPN.
 - `engine/PacketParser.java`: IPv4 packet parser retained from the earlier TUN-reader prototype. The active native forwarder owns the TUN descriptor, so this parser is not the current full-route forwarding path.
 - `engine/AttackSimulator.java`: Synthetic traffic generation for detector/UI demonstrations.
 - `ai/CybersecurityAIEngine.java`: Feature extraction, Isolation Forest scoring, and detector orchestration.
 - `ai/IsolationForestModel.java`: In-process forest built from generated nominal examples. This is a handcrafted prototype model, not a downloaded or trained production model.
 - `ai/NetworkIntrusionDetector.java`: Port-scan, SYN-rate, and traffic-outlier heuristics.
-- `ai/MalwareBehaviorDetector.java`: Risky-port, periodic-beacon, DNS tunneling, and outbound-volume heuristics.
+- `ai/MalwareBehaviorDetector.java`: Stratum signature, periodic-beacon, DNS tunneling, and high-volume asymmetric-traffic heuristics.
 - `ai/AIAssistantExplainer.java`: Offline fixed knowledge base and rule-based responses. It is not a generative language model.
 - `storage/SecurityRepository.java`: In-memory active state, background analysis, listener notifications, and block lists.
 - `storage/SecurityDatabaseHelper.java`: Local SQLite persistence for alerts and flows.
 - `model/`: Flow, packet, alert, severity, threat type, and summary data structures.
-- `app/src/main/res/`: Android layouts, strings, themes, icons, and navigation resources.
+- `app/src/main/res/`: Android layouts, strings, themes, the adaptive EdgeSecAI shield icon, and navigation resources.
 
 ## Live traffic path
 
@@ -88,7 +110,7 @@ Production sources are under `app/src/main/java/com/example/edgesecai/`.
 6. The SOCKS endpoint reports destination, protocol, byte count, timing, and classic UDP DNS query names to `SecurityRepository`. Analysis and persistence run on a background executor.
 7. The Dashboard separately samples Android `TrafficStats` counters once per second while visible. Those are device-wide throughput counters, not per-app flow attribution.
 
-The foreground notification and dashboard protection state should only indicate active once TUN and native forwarding startup report success. If the native tunnel cannot start, the service tears down the VPN interface.
+The foreground notification and dashboard protection state should only indicate active once TUN and native forwarding startup report success. If the native tunnel cannot start, the service tears down the VPN interface. The Android emulator has completed an external HTTPS request through the protected TCP path; this should not be treated as validation for all devices or networks.
 
 ## Detection and data limits
 
