@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Navigation graph is no longer used; app uses manual fragment transactions -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/placeholder">
+    <fragment
+        android:id="@+id/placeholder"
+        android:name="com.example.edgesecai.ui.DashboardFragment"
+        android:label="Dashboard"/>
+</navigation>

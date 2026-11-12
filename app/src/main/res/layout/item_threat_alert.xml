@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="12dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/cyber_card_stroke">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- Top Header: Severity + Threat Title + Anomaly Score -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textSeverityBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CRITICAL"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/badge_critical_bg"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"/>
+
+            <TextView
+                android:id="@+id/textMitreTechnique"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="T1071"
+                android:textSize="11sp"
+                android:textColor="@color/cyber_accent"
+                android:background="@drawable/badge_mitre_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/textAnomalyScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="96.5% AI Confidence"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/threat_high"/>
+        </LinearLayout>
+
+        <!-- Threat Name -->
+        <TextView
+            android:id="@+id/textThreatTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Malware C2 Beaconing Detected"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <!-- Flow Endpoints & App -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textEndpoints"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="192.168.1.200:52140 → 198.51.100.45:8443"
+                android:textSize="12sp"
+                android:textColor="?android:textColorSecondary"/>
+
+            <TextView
+                android:id="@+id/textAppName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="App: Unknown"
+                android:textSize="12sp"
+                android:textStyle="italic"
+                android:textColor="?android:textColorSecondary"/>
+        </LinearLayout>
+
+        <!-- Time & Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textTimestamp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Just now"
+                android:textSize="11sp"
+                android:textColor="?android:textColorTertiary"/>
+
+            <TextView
+                android:id="@+id/textBlockedBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BLOCKED"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/badge_blocked_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"/>
+        </LinearLayout>
+
+        <!-- Expandable Details Container -->
+        <LinearLayout
+            android:id="@+id/layoutExpandedDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="AI Forensic Diagnosis"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/cyber_accent"/>
+
+            <TextView
+                android:id="@+id/textAiDiagnosis"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Deep AI diagnosis goes here..."
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Recommended Mitigation"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/threat_low"/>
+
+            <TextView
+                android:id="@+id/textRecommendedActions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="1. Isolate device\n2. Terminate app"
+                android:textSize="12sp"
+                android:lineSpacingExtra="2dp"/>
+
+            <TextView
+                android:id="@+id/textForensicsHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Forensic Telemetry Snapshot"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="?android:textColorSecondary"/>
+
+            <TextView
+                android:id="@+id/textForensics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Payload sample"
+                android:fontFamily="monospace"
+                android:textSize="11sp"
+                android:background="@drawable/code_box_bg"
+                android:padding="8dp"/>
+
+            <!-- Action buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="end"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBlockEndpoint"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Block IP"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

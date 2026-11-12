@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">EdgeSecAI</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- Navigation -->
+    <string name="tab_dashboard">Dashboard</string>
+    <string name="tab_alerts">Alerts</string>
+    <string name="tab_flows">Flows</string>
+    <string name="tab_simulator">Simulator</string>
+    <string name="tab_assistant">AI Chat</string>
+
+    <!-- Dashboard Shield -->
+    <string name="shield_inactive">🔓 Shield Inactive</string>
+    <string name="shield_active">🛡️ Shield Active</string>
+    <string name="shield_subtitle_inactive">Tap to start on-device traffic inspection</string>
+    <string name="shield_subtitle_active">Real-time AI-powered cybersecurity monitoring</string>
+    <string name="activate_shield">Activate Shield</string>
+    <string name="deactivate_shield">Deactivate Shield</string>
+
+    <!-- Dashboard Stats -->
+    <string name="stat_packets">Packets Processed</string>
+    <string name="stat_active_flows">Active Flows</string>
+    <string name="stat_threats">Threats Detected</string>
+    <string name="stat_blocked">Attacks Blocked</string>
+    <string name="ambient_anomaly">Ambient Anomaly Level</string>
+    <string name="anomaly_default">0% — Clean Baseline</string>
+    <string name="volume_inspected">Live Device Traffic (↓ received / ↑ sent)</string>
+
+    <!-- Alerts -->
+    <string name="alerts_title">Threat Alerts</string>
+    <string name="no_alerts">No threats detected yet. Run a simulation or activate the shield.</string>
+
+    <!-- Flows -->
+    <string name="flows_title">Active Network Flows</string>
+    <string name="no_flows">No active flows. Activate the shield to begin monitoring.</string>
+
+    <!-- Simulator -->
+    <string name="simulator_title">Attack Simulator</string>
+    <string name="simulator_subtitle">Generate synthetic attack traffic to test detection engine</string>
+    <string name="sim_port_scan">Port Scan</string>
+    <string name="sim_c2_beacon">C2 Beaconing</string>
+    <string name="sim_dns_tunnel">DNS Tunneling</string>
+    <string name="sim_syn_flood">SYN Flood</string>
+    <string name="sim_cryptominer">Cryptominer</string>
+    <string name="sim_normal">Normal Traffic</string>
+
+    <!-- AI Assistant -->
+    <string name="assistant_title">Offline AI Assistant</string>
+    <string name="chat_hint">Ask about threats, C2, entropy…</string>
+    <string name="chat_send">Send</string>
+</resources>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardElevation="1dp"
+    app:cardCornerRadius="10dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/cyber_card_stroke">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textFlowProtocol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TCP"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/badge_mitre_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"/>
+
+            <TextView
+                android:id="@+id/textFlowAppName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Chrome"
+                android:textSize="13sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/textFlowClassification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Normal"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/threat_low"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textFlowEndpoints"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="192.168.1.200:51234 → 142.250.190.46:443"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:textColor="?android:textColorSecondary"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textFlowStats"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="12 pkts • 4.8 KB • 2.4s"
+                android:textSize="11sp"
+                android:textColor="?android:textColorTertiary"/>
+
+            <TextView
+                android:id="@+id/textFlowAnomalyScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Anomaly: 12%"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

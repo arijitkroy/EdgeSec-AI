@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/simulator_title"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/simulator_subtitle"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"/>
+
+        <!-- Attack buttons -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimPortScan"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_port_scan"
+            android:textAllCaps="false"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimC2Beacon"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_c2_beacon"
+            android:textAllCaps="false"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimDnsTunnel"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_dns_tunnel"
+            android:textAllCaps="false"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimSynFlood"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_syn_flood"
+            android:textAllCaps="false"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimCryptominer"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_cryptominer"
+            android:textAllCaps="false"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="?android:attr/listDivider"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSimNormalTraffic"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="@string/sim_normal"
+            android:textAllCaps="false"/>
+
+        <TextView
+            android:id="@+id/textSimulatorResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="13sp"
+            android:textColor="@color/cyber_accent"
+            android:visibility="gone"/>
+    </LinearLayout>
+</ScrollView>
