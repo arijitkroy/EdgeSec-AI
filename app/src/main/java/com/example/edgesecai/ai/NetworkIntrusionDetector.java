@@ -23,8 +23,14 @@ public class NetworkIntrusionDetector {
         // Indicators: High port entropy, contacting multiple ports (> 4) in short burst, or SYN/ACK ratio >> 3.0
         Set<Integer> uniquePorts = new HashSet<>();
         if (recentPackets != null) {
+            long windowStart = now - 15_000L;
             for (NetworkPacket p : recentPackets) {
-                if (p.getSrcIp().equals(flow.getSrcIp())) {
+                boolean probe = "SYN".equalsIgnoreCase(p.getTcpFlags())
+                        || "CONNECT".equalsIgnoreCase(p.getTcpFlags());
+                if (probe && "TCP".equalsIgnoreCase(p.getProtocol())
+                        && p.getTimestamp() >= windowStart
+                        && p.getSrcIp().equals(flow.getSrcIp())
+                        && p.getDstIp().equals(flow.getDstIp())) {
                     uniquePorts.add(p.getDstPort());
                 }
             }
@@ -83,7 +89,11 @@ public class NetworkIntrusionDetector {
         double packetZScore = baselineProfiler != null ? baselineProfiler.computePacketRateZScore(features.packetRate) : 0.0;
         double byteZScore = baselineProfiler != null ? baselineProfiler.computeByteRateZScore(features.byteRate) : 0.0;
 
-        if ((isolationForestScore >= 0.78 && (packetZScore > 3.0 || byteZScore > 3.0)) || isolationForestScore >= 0.88) {
+        boolean enoughTrafficForAnomalyDecision = flow.getTotalPackets() >= 10
+                && flow.getDurationMs() >= 5_000L && flow.getTotalBytes() >= 20_000L;
+        if (enoughTrafficForAnomalyDecision
+                && ((isolationForestScore >= 0.78 && (packetZScore > 3.0 || byteZScore > 3.0))
+                || (isolationForestScore >= 0.92 && (packetZScore > 2.0 || byteZScore > 2.0)))) {
             return new ThreatAlert(
                     UUID.randomUUID().toString(),
                     now,

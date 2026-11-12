@@ -18,7 +18,7 @@
     <string name="deactivate_shield">Deactivate Shield</string>
 
     <!-- Dashboard Stats -->
-    <string name="stat_packets">Packets Processed</string>
+    <string name="stat_packets">Observed I/O Events</string>
     <string name="stat_active_flows">Active Flows</string>
     <string name="stat_threats">Threats Detected</string>
     <string name="stat_blocked">Attacks Blocked</string>
@@ -31,7 +31,7 @@
     <string name="no_alerts">No threats detected yet. Run a simulation or activate the shield.</string>
 
     <!-- Flows -->
-    <string name="flows_title">Active Network Flows</string>
+    <string name="flows_title">Recent Network Flows (up to 50)</string>
     <string name="no_flows">No active flows. Activate the shield to begin monitoring.</string>
 
     <!-- Simulator -->

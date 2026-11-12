@@ -62,15 +62,15 @@ public class NetworkFlowAdapter extends RecyclerView.Adapter<NetworkFlowAdapter.
         else bytesStr = String.format(Locale.US, "%.2f MB", totalBytes / (1024.0 * 1024.0));
 
         double durationSec = flow.getDurationMs() / 1000.0;
-        holder.textFlowStats.setText(String.format(Locale.US, "%d pkts • %s • %.1fs",
+        holder.textFlowStats.setText(String.format(Locale.US, "%d I/O events • %s payload • %.1fs",
                 flow.getTotalPackets(), bytesStr, durationSec));
 
         // Anomaly score
         double scorePercent = flow.getAnomalyScore() * 100;
-        holder.textFlowAnomalyScore.setText(String.format(Locale.US, "Anomaly: %.0f%%", scorePercent));
-        if (scorePercent >= 75) {
+        holder.textFlowAnomalyScore.setText(String.format(Locale.US, "Model score: %.0f%%", scorePercent));
+        if (scorePercent >= 85) {
             holder.textFlowAnomalyScore.setTextColor(Color.parseColor("#E53935"));
-        } else if (scorePercent >= 50) {
+        } else if (scorePercent >= 70) {
             holder.textFlowAnomalyScore.setTextColor(Color.parseColor("#FB8C00"));
         } else {
             holder.textFlowAnomalyScore.setTextColor(Color.parseColor("#94A3B8"));

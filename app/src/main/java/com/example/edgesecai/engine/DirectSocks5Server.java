@@ -144,7 +144,8 @@ public final class DirectSocks5Server implements AutoCloseable {
             remote.setSoTimeout(0);
             local.setSoTimeout(0);
             writeReply(output, 0);
-            report(address, port, "TCP", 0, "SYN");
+            // This proxy observes socket data, not raw TCP SYN packets.
+            report(address, port, "TCP", 0, "CONNECT", true, "", "");
             clients.execute(() -> pipe(local, remote, true, address, port));
             clients.execute(() -> pipe(remote, local, false, address, port));
             return true;
@@ -278,11 +279,8 @@ public final class DirectSocks5Server implements AutoCloseable {
         framed[portOffset] = (byte) (response.getPort() >>> 8);
         framed[portOffset + 1] = (byte) response.getPort();
         System.arraycopy(response.getData(), response.getOffset(), framed, headerLength, response.getLength());
+        report(response.getAddress(), response.getPort(), "UDP", response.getLength(), "", false, "", "");
         relay.send(new DatagramPacket(framed, framed.length, client));
-    }
-
-    private void report(InetAddress destination, int port, String protocol, int length, String flags) {
-        report(destination, port, protocol, length, flags, true, "", "");
     }
 
     private void report(InetAddress destination, int port, String protocol, int length, String flags,
@@ -290,11 +288,11 @@ public final class DirectSocks5Server implements AutoCloseable {
         long now = System.currentTimeMillis();
         // Keep one stable client-to-server flow key; isOutbound carries the byte direction.
         NetworkPacket packet = new NetworkPacket(now, "10.1.1.2", 0,
-                destination.getHostAddress(), port, protocol, length + 40, flags,
+                destination.getHostAddress(), port, protocol, length, flags,
                 dnsQuery, payloadPreview, 0, "Device traffic", outbound);
         repository.processPacket(packet);
-        android.util.Log.d("EdgeSec-Socks", "Observed " + protocol + " flow on destination port "
-                + port + " (" + length + " payload bytes)");
+        android.util.Log.d("EdgeSec-Socks", "Observed " + (outbound ? "outbound " : "inbound ")
+                + protocol + " flow on destination port " + port + " (" + length + " payload bytes)");
     }
 
     private static String parseDnsQuestion(byte[] message) {

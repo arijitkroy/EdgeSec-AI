@@ -33,6 +33,7 @@ public class SecurityRepository {
     private final List<NetworkPacket> recentPackets = Collections.synchronizedList(new ArrayList<>());
     private final List<ThreatAlert> alerts = new CopyOnWriteArrayList<>();
     private final Set<String> blockedIps = Collections.synchronizedSet(new HashSet<>());
+    private final Set<String> reportedAlertKeys = Collections.synchronizedSet(new HashSet<>());
     private final Set<Integer> blockedPorts = Collections.synchronizedSet(new HashSet<>());
 
     private final List<SecurityUpdateListener> listeners = new CopyOnWriteArrayList<>();
@@ -137,13 +138,16 @@ public class SecurityRepository {
 
             ThreatAlert alert = aiEngine.analyzeFlow(finalFlow, packetSnapshot);
             if (alert != null) {
-                alerts.add(0, alert);
-                dbHelper.insertAlert(alert);
-                stats.incrementThreats(alert.isBlocked());
-                if (alert.isBlocked()) {
-                    blockEndpoint(alert.getDestination().split(":")[0], finalFlow.getDstPort());
+                String alertKey = alert.getThreatType().name() + ":" + finalFlow.getFlowId();
+                if (reportedAlertKeys.add(alertKey)) {
+                    alerts.add(0, alert);
+                    dbHelper.insertAlert(alert);
+                    stats.incrementThreats(alert.isBlocked());
+                    if (alert.isBlocked()) {
+                        blockEndpoint(alert.getDestination().split(":")[0], finalFlow.getDstPort());
+                    }
+                    notifyAlert(alert);
                 }
-                notifyAlert(alert);
             }
 
             stats.setActiveFlows(activeFlows.size());
@@ -232,6 +236,7 @@ public class SecurityRepository {
         activeFlows.clear();
         recentPackets.clear();
         alerts.clear();
+        reportedAlertKeys.clear();
         blockedIps.clear();
         blockedPorts.clear();
         stats.reset();

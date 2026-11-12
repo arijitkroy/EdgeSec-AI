@@ -18,8 +18,17 @@ public class CybersecurityAIEngine {
     public ThreatAlert analyzeFlow(NetworkFlow flow, List<NetworkPacket> recentPackets) {
         if (flow == null) return null;
 
+        // Flow features must only use samples from this flow. The intrusion detector below
+        // still receives the shared window because port-scan detection correlates flows.
+        List<NetworkPacket> flowPackets = new java.util.ArrayList<>();
+        if (recentPackets != null) {
+            for (NetworkPacket packet : recentPackets) {
+                if (flow.getFlowId().equals(packet.getFlowKey())) flowPackets.add(packet);
+            }
+        }
+
         // 1. Feature extraction
-        FeatureVector features = FeatureExtractor.extract(flow, recentPackets);
+        FeatureVector features = FeatureExtractor.extract(flow, flowPackets);
 
         // 2. Unsupervised Anomaly Scoring via Isolation Forest
         double anomalyScore = isolationForestModel.calculateAnomalyScore(features.toArray());
@@ -31,7 +40,7 @@ public class CybersecurityAIEngine {
         }
 
         // 4. Malware Behavior Detection (C2, Exfil, DNS Tunneling, Mining)
-        ThreatAlert malwareAlert = MalwareBehaviorDetector.evaluate(flow, features, recentPackets);
+        ThreatAlert malwareAlert = MalwareBehaviorDetector.evaluate(flow, features, flowPackets);
         if (malwareAlert != null) {
             flow.setClassification(malwareAlert.getThreatType().getDisplayName());
             if (malwareAlert.isBlocked()) flow.setBlocked(true);

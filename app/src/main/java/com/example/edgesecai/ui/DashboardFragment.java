@@ -192,18 +192,18 @@ public class DashboardFragment extends Fragment implements SecurityRepository.Se
         int anomalyPercent = (int) (stats.getCurrentAnomalyLevel() * 100);
         progressAnomaly.setProgress(anomalyPercent);
 
-        if (anomalyPercent >= 75) {
+        if (anomalyPercent >= 85) {
             progressAnomaly.setIndicatorColor(Color.parseColor("#E53935"));
             textAnomalyPercent.setTextColor(Color.parseColor("#E53935"));
-        } else if (anomalyPercent >= 50) {
+        } else if (anomalyPercent >= 70) {
             progressAnomaly.setIndicatorColor(Color.parseColor("#FB8C00"));
             textAnomalyPercent.setTextColor(Color.parseColor("#FB8C00"));
         } else {
             progressAnomaly.setIndicatorColor(Color.parseColor("#43A047"));
             textAnomalyPercent.setTextColor(getResources().getColor(R.color.text_secondary, null));
         }
-        textAnomalyPercent.setText(String.format(Locale.US, "%d%% %s", anomalyPercent,
-                anomalyPercent < 25 ? "— Clean Baseline" : anomalyPercent < 60 ? "— Elevated" : "— CRITICAL"));
+        textAnomalyPercent.setText(String.format(Locale.US, "Model score %d%% %s", anomalyPercent,
+                anomalyPercent < 25 ? "— typical" : anomalyPercent < 60 ? "— unusual" : "— highly unusual"));
 
         // Live device-wide throughput is sampled independently of VPN packet inspection.
 
