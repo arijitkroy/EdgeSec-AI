@@ -5,10 +5,12 @@ import com.example.edgesecai.storage.SecurityRepository;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AttackSimulator {
     private final SecurityRepository repository;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private static final AtomicInteger runCounter = new AtomicInteger(1);
 
     public AttackSimulator(SecurityRepository repository) {
         this.repository = repository;
@@ -16,10 +18,13 @@ public class AttackSimulator {
 
     public void simulatePortScan(SimulatorCallback callback) {
         executor.execute(() -> {
-            int[] targetPorts = {21, 22, 23, 80, 443, 8080, 4444, 3389, 5900, 8443};
-            String attackerIp = "192.168.1.105";
+            int run = runCounter.getAndIncrement();
+            String attackerIp = "192.168.1." + (100 + (run % 50));
             String victimIp = "192.168.1.200";
+            repository.unblockEndpoint(attackerIp, 0);
+            repository.clearReportedAlertKey("PORT_SCAN:");
 
+            int[] targetPorts = {21, 22, 23, 80, 443, 8080, 4444, 3389, 5900, 8443};
             for (int port : targetPorts) {
                 NetworkPacket packet = new NetworkPacket(
                         System.currentTimeMillis(),
@@ -39,22 +44,26 @@ public class AttackSimulator {
 
     public void simulateC2Beaconing(SimulatorCallback callback) {
         executor.execute(() -> {
+            int run = runCounter.getAndIncrement();
+            int localPort = 50000 + (run % 10000);
             String victimIp = "192.168.1.200";
-            String c2Ip = "198.51.100.45";
+            String c2Ip = "198.51.100." + (40 + (run % 40));
             int c2Port = 8443;
+            repository.unblockEndpoint(c2Ip, 0);
+            repository.unblockEndpoint(c2Ip, c2Port);
+            repository.clearReportedAlertKey("MALWARE_C2_BEACONING:");
 
             for (int i = 0; i < 6; i++) {
                 NetworkPacket packet = new NetworkPacket(
                         System.currentTimeMillis(),
-                        victimIp, 52140,
+                        victimIp, localPort,
                         c2Ip, c2Port,
                         "TCP", 64, "ACK PSH",
                         "", "PING_HEARTBEAT_STATUS=OK", 10255, "TrojanSpywareService", true
                 );
                 repository.processPacket(packet);
                 try {
-                    // Regular 1200ms interval with negligible jitter (CV < 0.1)
-                    Thread.sleep(1200 + (long) (Math.random() * 20));
+                    Thread.sleep(850 + (long) (Math.random() * 20));
                 } catch (InterruptedException ignored) {}
             }
             if (callback != null) callback.onSimulationComplete("Malware C2 beaconing simulated (6 regular heartbeats)");
@@ -63,14 +72,20 @@ public class AttackSimulator {
 
     public void simulateDnsTunneling(SimulatorCallback callback) {
         executor.execute(() -> {
+            int run = runCounter.getAndIncrement();
+            int localPort = 53000 + (run % 10000);
             String victimIp = "192.168.1.200";
             String dnsServerIp = "8.8.8.8";
-            // High entropy hex/base64 encoded exfiltration subdomain
-            String encodedQuery = "a8f3c7b9e1d2c4b5a6f7e8d9c0b1a2f3.exfil.darkops-c2.net";
+            repository.unblockEndpoint(dnsServerIp, 0);
+            repository.unblockEndpoint(null, 53);
+            repository.clearReportedAlertKey("DNS_TUNNELING:");
+
+            String prefix = Long.toHexString(Double.doubleToLongBits(Math.random()));
+            String encodedQuery = prefix + "a8f3c7b9e1d2c4b5a6f7e8d9.exfil.darkops-c2.net";
 
             NetworkPacket packet = new NetworkPacket(
                     System.currentTimeMillis(),
-                    victimIp, 53531,
+                    victimIp, localPort,
                     dnsServerIp, 53,
                     "UDP", 128, "",
                     encodedQuery, "EXFILTRATED_PAYLOAD_BASE64", 10188, "CovertDataExfiltrator", true
@@ -83,21 +98,26 @@ public class AttackSimulator {
 
     public void simulateSynFlood(SimulatorCallback callback) {
         executor.execute(() -> {
-            String attackerIp = "203.0.113.19";
+            int run = runCounter.getAndIncrement();
+            String attackerIp = "203.0.113." + (10 + (run % 50));
             String victimIp = "192.168.1.200";
             int targetPort = 80;
+            int srcPort = 45000 + (run % 10000);
+            repository.unblockEndpoint(attackerIp, 0);
+            repository.unblockEndpoint(victimIp, targetPort);
+            repository.clearReportedAlertKey("SYN_FLOOD_DOS:");
 
             for (int i = 0; i < 35; i++) {
                 NetworkPacket packet = new NetworkPacket(
                         System.currentTimeMillis(),
-                        attackerIp, 40000 + i,
+                        attackerIp, srcPort,
                         victimIp, targetPort,
                         "TCP", 40, "SYN",
                         "", "", 0, "ExternalAttacker", false
                 );
                 repository.processPacket(packet);
                 try {
-                    Thread.sleep(15);
+                    Thread.sleep(10);
                 } catch (InterruptedException ignored) {}
             }
             if (callback != null) callback.onSimulationComplete("SYN flood DoS packet storm simulated (35 SYNs)");
@@ -106,13 +126,18 @@ public class AttackSimulator {
 
     public void simulateCryptominer(SimulatorCallback callback) {
         executor.execute(() -> {
+            int run = runCounter.getAndIncrement();
+            int localPort = 48000 + (run % 10000);
             String victimIp = "192.168.1.200";
-            String minerPoolIp = "198.51.100.88";
+            String minerPoolIp = "198.51.100." + (80 + (run % 20));
             int poolPort = 3333;
+            repository.unblockEndpoint(minerPoolIp, 0);
+            repository.unblockEndpoint(minerPoolIp, poolPort);
+            repository.clearReportedAlertKey("SUSPICIOUS_PORT_USAGE:");
 
             NetworkPacket packet = new NetworkPacket(
                     System.currentTimeMillis(),
-                    victimIp, 48210,
+                    victimIp, localPort,
                     minerPoolIp, poolPort,
                     "TCP", 180, "ACK PSH",
                     "", "{\"id\":1,\"method\":\"mining.subscribe\",\"params\":[\"cpuminer/2.5.1\"]}",
@@ -126,14 +151,16 @@ public class AttackSimulator {
 
     public void simulateNormalTraffic(SimulatorCallback callback) {
         executor.execute(() -> {
+            int run = runCounter.getAndIncrement();
+            int localPort = 55000 + (run % 10000);
             String localIp = "192.168.1.200";
-            String webServerIp = "142.250.190.46"; // Google
+            String webServerIp = "142.250.190.46";
             int webPort = 443;
 
             // 1. Normal DNS query
             NetworkPacket dnsPacket = new NetworkPacket(
                     System.currentTimeMillis(),
-                    localIp, 51234,
+                    localIp, 51234 + (run % 1000),
                     "8.8.8.8", 53,
                     "UDP", 75, "",
                     "wikipedia.org", "", 10100, "Chrome", true
@@ -144,7 +171,7 @@ public class AttackSimulator {
             for (int i = 0; i < 4; i++) {
                 NetworkPacket packet = new NetworkPacket(
                         System.currentTimeMillis(),
-                        localIp, 55000 + i,
+                        localIp, localPort,
                         webServerIp, webPort,
                         "TCP", 512, "ACK",
                         "", "TLSv1.3 Encrypted Application Data", 10100, "Chrome", true
@@ -163,3 +190,4 @@ public class AttackSimulator {
         void onSimulationComplete(String message);
     }
 }
+

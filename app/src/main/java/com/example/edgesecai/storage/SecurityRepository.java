@@ -83,6 +83,17 @@ public class SecurityRepository {
         return blockedIps.contains(ip) || blockedPorts.contains(port);
     }
 
+    public void unblockEndpoint(String ip, int port) {
+        if (ip != null) blockedIps.remove(ip);
+        if (port > 0) blockedPorts.remove(port);
+    }
+
+    public void clearReportedAlertKey(String prefix) {
+        synchronized (reportedAlertKeys) {
+            reportedAlertKeys.removeIf(k -> k.startsWith(prefix));
+        }
+    }
+
     public void blockEndpoint(String ip, int port) {
         if (ip != null && !ip.isEmpty()) blockedIps.add(ip);
         if (port > 0) blockedPorts.add(port);
@@ -146,7 +157,17 @@ public class SecurityRepository {
                     dbHelper.insertAlert(alert);
                     stats.incrementThreats(alert.isBlocked());
                     if (alert.isBlocked()) {
-                        blockEndpoint(alert.getDestination().split(":")[0], finalFlow.getDstPort());
+                        if (alert.getThreatType() == com.example.edgesecai.model.ThreatType.PORT_SCAN) {
+                            blockEndpoint(finalFlow.getSrcIp(), 0);
+                        } else {
+                            String dest = alert.getDestination();
+                            if (dest != null && dest.contains(":")) {
+                                String cleanIp = dest.split(":")[0].trim();
+                                if (cleanIp.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+                                    blockEndpoint(cleanIp, 0);
+                                }
+                            }
+                        }
                     }
                     notifyAlert(alert);
                 }
